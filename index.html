@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#050508"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="YODHA"/>
+  <title>YODHA v2 — Warrior's Discipline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;overflow:hidden;}
+    body{background:#050508;font-family:'Rajdhani',sans-serif;color:#e8e8f0;overscroll-behavior:none;}
+    :root{--bg:#050508;--bg2:#0d0d14;--bg3:#13131e;--border:#1f1f33;--accent:#ff2222;--text:#e8e8f0;--muted:#6060a0;--danger:#ff2244;--green:#39ff14;--gold:#ffd700;}
+    #app{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+    .scanline{position:fixed;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9999;}
+
+    /* HEADER — clamp() responsive fonts */
+    .header{padding:clamp(10px,3vw,16px) clamp(12px,4vw,16px) 10px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%);position:relative;overflow:hidden;flex-shrink:0;}
+    .header-glow{position:absolute;top:-60%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 50% 0%,#ff222218 0%,transparent 60%);pointer-events:none;}
+    .brand{font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,7.5vw,36px);letter-spacing:clamp(3px,1.8vw,8px);color:var(--accent);line-height:1;}
+    .brand-sub{font-family:'Share Tech Mono',monospace;font-size:clamp(6px,1.8vw,9px);letter-spacing:clamp(2px,1vw,4px);color:var(--muted);margin-top:1px;}
+    .rank-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--accent);font-family:'Bebas Neue',sans-serif;font-size:clamp(11px,3.5vw,16px);letter-spacing:3px;color:var(--accent);margin-top:8px;}
+    .score-bar{height:2px;background:var(--border);margin-top:8px;}
+    .score-fill{height:100%;background:var(--accent);transition:width .8s ease;box-shadow:0 0 8px var(--accent);}
+
+    /* NAV */
+    .nav{display:flex;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
+    .nav-btn{flex:1;padding:10px 2px 6px;background:none;border:none;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:clamp(8px,2.3vw,10px);font-weight:600;letter-spacing:1px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:color .2s;}
+    .nav-btn.active{color:var(--accent);}
+    .nav-icon{font-size:clamp(14px,4vw,17px);}
+
+    /* CONTENT */
+    .content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+    .section{padding:14px;}
+
+    /* CARDS */
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:13px;margin-bottom:10px;}
+    .card-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(14px,4.2vw,18px);letter-spacing:3px;color:var(--accent);margin-bottom:10px;}
+
+    /* RING */
+    .ring-wrap{position:relative;width:clamp(54px,15vw,68px);height:clamp(54px,15vw,68px);flex-shrink:0;}
+    .ring-svg{transform:rotate(-90deg);}
+    .ring-bg{fill:none;stroke:var(--border);stroke-width:4;}
+    .ring-fg{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s ease;}
+    .ring-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Bebas Neue',sans-serif;font-size:clamp(12px,3.8vw,17px);color:var(--accent);}
+
+    /* TASKS */
+    .task-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+    .task-row:last-child{border-bottom:none;}
+    .task-cat{font-family:'Share Tech Mono',monospace;font-size:clamp(7px,1.9vw,8px);color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+    .task-name{font-size:clamp(11px,3.3vw,13px);font-weight:600;color:var(--text);line-height:1.3;}
+    .task-name.done{text-decoration:line-through;color:var(--muted);}
+    .task-name.missed{color:var(--danger);}
+    .leak-tag{font-size:9px;color:var(--danger);font-family:'Share Tech Mono',monospace;margin-top:3px;padding:1px 5px;border:1px solid #ff224433;display:inline-block;}
+    .mission-tag{font-size:9px;color:var(--gold);font-family:'Share Tech Mono',monospace;margin-top:3px;padding:1px 5px;border:1px solid #ffd70033;display:inline-block;}
+
+    /* BUTTONS */
+    .btn-check{width:28px;height:28px;border:1.5px solid var(--border);background:transparent;font-size:13px;color:#444;flex-shrink:0;margin-top:2px;cursor:pointer;border-radius:2px;transition:all .15s;}
+    .btn-check.done{border-color:var(--accent);background:rgba(0,207,255,.1);color:var(--accent);}
+    .btn-check.missed{border-color:var(--danger);background:rgba(255,34,34,.08);color:var(--danger);}
+    .btn-miss{padding:3px 7px;font-size:9px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:1px;cursor:pointer;margin-left:auto;flex-shrink:0;border-radius:2px;}
+    .btn-primary{width:100%;padding:13px;background:var(--accent);color:#000;font-family:'Rajdhani',sans-serif;font-size:clamp(12px,3.8vw,15px);font-weight:700;letter-spacing:2px;border:none;cursor:pointer;border-radius:2px;margin-top:6px;}
+    .btn-primary:active{opacity:.85;}
+    .btn-secondary{flex:1;padding:11px;background:transparent;color:var(--accent);font-family:'Rajdhani',sans-serif;font-size:clamp(11px,3.2vw,13px);font-weight:700;letter-spacing:1px;border:1px solid var(--accent);cursor:pointer;border-radius:2px;}
+    .btn-danger-outline{flex:1;padding:11px;background:transparent;color:var(--danger);font-family:'Rajdhani',sans-serif;font-size:clamp(11px,3.2vw,13px);font-weight:700;letter-spacing:1px;border:1px solid var(--danger);cursor:pointer;border-radius:2px;}
+
+    /* DAY SELECTOR */
+    .day-selector{display:flex;gap:5px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;scrollbar-width:none;}
+    .day-selector::-webkit-scrollbar{display:none;}
+    .day-btn{flex-shrink:0;width:38px;height:38px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;position:relative;border-radius:2px;transition:all .2s;}
+    .day-btn.active{border-color:var(--accent);color:var(--accent);}
+    .day-btn.good{border-color:#39ff1455;color:var(--green);}
+    .day-dot{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;}
+
+    /* INPUTS */
+    .input-group{margin-bottom:9px;}
+    .input-label{font-family:'Share Tech Mono',monospace;font-size:clamp(7px,2vw,9px);letter-spacing:2px;color:var(--muted);margin-bottom:3px;display:block;}
+    .input-field{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:clamp(12px,3.3vw,14px);padding:9px 11px;border-radius:2px;}
+    .input-field:focus{outline:none;border-color:var(--accent);}
+
+    /* SPECIAL MISSION */
+    .mission-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+    .mission-day-in{width:48px;background:var(--bg3);border:1px solid #ffd70044;color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:16px;padding:7px 6px;border-radius:2px;text-align:center;}
+    .mission-day-in:focus{outline:none;border-color:var(--gold);}
+    .mission-task-in{flex:1;background:var(--bg3);border:1px solid #ffd70044;color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:clamp(11px,3.2vw,13px);padding:7px 9px;border-radius:2px;}
+    .mission-task-in:focus{outline:none;border-color:var(--gold);}
+    .btn-rm{padding:5px 9px;background:transparent;border:1px solid #ff224433;color:var(--danger);font-size:12px;cursor:pointer;border-radius:2px;}
+    .btn-add-m{width:100%;padding:10px;background:#ffd70011;border:1px solid #ffd70033;color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;cursor:pointer;border-radius:2px;margin-bottom:10px;}
+
+    /* MODAL */
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:500;display:flex;align-items:flex-end;}
+    .modal{background:var(--bg2);border-top:2px solid var(--danger);padding:18px 16px 36px;width:100%;max-height:80vh;overflow-y:auto;}
+    .modal-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(17px,5vw,22px);letter-spacing:4px;color:var(--danger);margin-bottom:4px;}
+    .modal-sub{font-size:clamp(8px,2.3vw,10px);color:var(--muted);margin-bottom:14px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+    .leak-btn{width:100%;padding:11px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:clamp(12px,3.3vw,14px);font-weight:600;letter-spacing:1px;cursor:pointer;margin-bottom:5px;text-align:left;border-radius:2px;}
+    .leak-btn:active{border-color:var(--danger);color:var(--danger);}
+
+    /* STATS */
+    .stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+    .stat-label{font-family:'Share Tech Mono',monospace;font-size:clamp(8px,2.3vw,10px);color:var(--muted);letter-spacing:1px;}
+    .stat-val{font-family:'Bebas Neue',sans-serif;font-size:clamp(18px,5.2vw,22px);color:var(--accent);letter-spacing:2px;}
+
+    /* LEAK BARS */
+    .leak-bar{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+    .leak-label{font-size:clamp(10px,3vw,12px);font-weight:600;min-width:clamp(105px,30vw,130px);}
+    .leak-track{flex:1;height:5px;background:var(--border);}
+    .leak-fill{height:100%;background:var(--danger);transition:width .6s ease;}
+    .leak-count{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--danger);}
+
+    /* RANK CARDS */
+    .rank-card{padding:11px 13px;border:1px solid;border-radius:2px;display:flex;align-items:center;gap:11px;margin-bottom:7px;}
+    .rank-card.current{border-width:2px;}
+    .rank-icon-big{font-size:clamp(20px,6vw,26px);flex-shrink:0;}
+    .rank-name-big{font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,4.8vw,20px);letter-spacing:3px;line-height:1;}
+    .rank-sub-sm{font-size:clamp(8px,2.3vw,10px);letter-spacing:1px;margin-top:1px;opacity:.7;font-family:'Share Tech Mono',monospace;}
+    .rank-badge{font-family:'Share Tech Mono',monospace;font-size:clamp(8px,2.3vw,10px);margin-left:auto;opacity:.7;}
+
+    /* TOAST */
+    .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-family:'Bebas Neue',sans-serif;font-size:clamp(13px,4vw,17px);letter-spacing:3px;padding:10px 18px;border-radius:2px;z-index:800;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
+    .toast.show{opacity:1;}
+
+    /* MISC */
+    .divider{height:1px;background:var(--border);margin:14px 0;}
+    .sec-label{font-family:'Share Tech Mono',monospace;font-size:clamp(7px,2vw,9px);letter-spacing:3px;color:var(--muted);margin-bottom:10px;}
+    .warn-box{background:var(--bg3);border:1px solid var(--border);padding:11px;margin-bottom:10px;}
+    .warn-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:5px;}
+    .data-row{display:flex;gap:8px;margin-top:8px;}
+
+    /* AUDIO TOGGLE */
+    .toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:8px 0;}
+    .toggle-track{width:40px;height:22px;background:var(--border);border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+    .toggle-track.on{background:var(--accent);}
+    .toggle-thumb{width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;}
+    .toggle-track.on .toggle-thumb{left:21px;}
+
+    #importFile{display:none;}
+  </style>
+</head>
+<body>
+<div class="scanline"></div>
+<div id="app">
+  <div class="header">
+    <div class="header-glow" id="hglow"></div>
+    <div class="brand">YODHA</div>
+    <div class="brand-sub">WARRIOR'S DISCIPLINE SYSTEM</div>
+    <div class="rank-pill" id="rankPill">💀 Hijde — 0%</div>
+    <div class="score-bar"><div class="score-fill" id="scoreFill" style="width:0%"></div></div>
+  </div>
+  <div class="content" id="content"></div>
+  <nav class="nav" id="nav"></nav>
+</div>
+
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">⚠ EXPLAIN YOURSELF</div>
+    <div class="modal-sub">WHY DID YOU FAIL? SELECT YOUR WEAKNESS:</div>
+    <div id="leakBtns"></div>
+  </div>
+</div>
+
+<input type="file" id="importFile" accept=".json" onchange="handleImport(event)"/>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ──────────────────────────
+const RANKS=[
+  {id:1,name:"Hijde",sub:"Zero Effort",color:"#4a1010",accent:"#ff2222",glow:"#ff222218",min:0,icon:"💀"},
+  {id:2,name:"Namard",sub:"Weak Will",color:"#3a1a05",accent:"#ff6a00",glow:"#ff6a0018",min:15,icon:"🩸"},
+  {id:3,name:"Launde",sub:"Still Learning",color:"#1a1a05",accent:"#ffd700",glow:"#ffd70018",min:30,icon:"⚔️"},
+  {id:4,name:"Mard",sub:"Rising",color:"#051a05",accent:"#39ff14",glow:"#39ff1418",min:50,icon:"🛡️"},
+  {id:5,name:"Asli Mard",sub:"Real Fighter",color:"#051520",accent:"#00cfff",glow:"#00cfff18",min:65,icon:"🔥"},
+  {id:6,name:"Yodha",sub:"Warrior",color:"#0a0520",accent:"#a855f7",glow:"#a855f718",min:80,icon:"⚡"},
+  {id:7,name:"Shoorveer",sub:"Legendary",color:"#150a00",accent:"#ffd700",glow:"#ffd70018",min:95,icon:"👑"},
+];
+const LEAKS=["Digital Addiction","Procrastination","Social Pressure","Fatigue / No Energy","Laziness","Distraction","Overslept","No Motivation"];
+const CATS=["Study - Physics","Study - Chemistry","Study - Biology","Skill - Python","Fitness","Habit - No-Fap"];
+const NAV=[{v:"dashboard",icon:"⚔️",label:"HOME"},{v:"tracker",icon:"📋",label:"TASKS"},{v:"planner",icon:"🗓",label:"PLAN"},{v:"analysis",icon:"📊",label:"LEAKS"},{v:"ranks",icon:"🏆",label:"RANKS"}];
+
+// ── AUDIO ENGINE (Web Audio API — no external files) ──
+let audioCtx=null, audioEnabled=true;
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playClick(){
+  if(!audioEnabled)return;
+  try{const c=getCtx(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);
+    o.type='square';o.frequency.setValueAtTime(880,c.currentTime);o.frequency.exponentialRampToValueAtTime(440,c.currentTime+0.06);
+    g.gain.setValueAtTime(0.15,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.08);
+    o.start(c.currentTime);o.stop(c.currentTime+0.08);}catch(e){}
+}
+function playMiss(){
+  if(!audioEnabled)return;
+  try{const c=getCtx();
+    [180,120,90].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);
+      o.type='sawtooth';o.frequency.setValueAtTime(f,c.currentTime+i*0.07);
+      g.gain.setValueAtTime(0.12,c.currentTime+i*0.07);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+i*0.07+0.18);
+      o.start(c.currentTime+i*0.07);o.stop(c.currentTime+i*0.07+0.2);});}catch(e){}
+}
+function playRankUp(){
+  if(!audioEnabled)return;
+  try{const c=getCtx();
+    [523,659,784,1047].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);
+      o.type='square';o.frequency.setValueAtTime(f,c.currentTime+i*0.12);
+      g.gain.setValueAtTime(0.1,c.currentTime+i*0.12);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+i*0.12+0.15);
+      o.start(c.currentTime+i*0.12);o.stop(c.currentTime+i*0.12+0.18);});}catch(e){}
+}
+
+// ── STATE ──────────────────────────────
+let state,view="dashboard",leakTarget=null,prevRankId=null;
+
+function buildDays(plan,missions){
+  return Array.from({length:15},(_,i)=>{
+    const day=i+1;
+    const base=CATS.map((cat,j)=>({id:`d${day}-t${j}`,category:cat,task:(plan&&plan[cat])||`Work on ${cat} — Day ${day}`,done:false,missed:false,leakReason:null,isSpecial:false}));
+    const sp=(missions||[]).filter(m=>parseInt(m.day)===day).map((m,k)=>({id:`d${day}-s${k}`,category:"⭐ Special Mission",task:m.task||"Special task",done:false,missed:false,leakReason:null,isSpecial:true}));
+    return {day,tasks:[...base,...sp]};
+  });
+}
+
+function loadState(){
+  try{const s=localStorage.getItem('yodha_v2');if(s)return JSON.parse(s);}catch(e){}
+  return {plan:{},days:buildDays({},[]),currentDay:1,planInputs:{},specialMissions:[],audioOn:true};
+}
+function saveState(){try{localStorage.setItem('yodha_v2',JSON.stringify(state));}catch(e){}}
+state=loadState();
+audioEnabled=state.audioOn!==false;
+
+// ── HELPERS ────────────────────────────
+function getDayScore(i){const d=state.days[i];const done=d.tasks.filter(t=>t.done).length;return d.tasks.length?Math.round(done/d.tasks.length*100):0;}
+function getOverallScore(){const a=state.days.slice(0,state.currentDay);if(!a.length)return 0;return Math.round(a.reduce((s,_,i)=>s+getDayScore(i),0)/a.length);}
+function getRank(sc){let r=RANKS[0];for(const x of RANKS){if(sc>=x.min)r=x;}return r;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showToast(msg,col){const t=document.getElementById('toast');t.textContent=msg;t.style.background=col||'var(--accent)';t.style.color=col?'#fff':'#000';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+
+// ── HEADER ─────────────────────────────
+function updateHeader(){
+  const sc=getOverallScore(),rank=getRank(sc);
+  document.documentElement.style.setProperty('--accent',rank.accent);
+  document.getElementById('hglow').style.background=`radial-gradient(ellipse at 50% 0%,${rank.glow} 0%,transparent 60%)`;
+  document.getElementById('rankPill').textContent=`${rank.icon} ${rank.name} — ${sc}%`;
+  const sf=document.getElementById('scoreFill');sf.style.width=sc+'%';sf.style.background=rank.accent;sf.style.boxShadow=`0 0 8px ${rank.accent}`;
+  if(prevRankId!==null&&rank.id>prevRankId){showToast(`⚡ RANK UP! ${rank.icon} ${rank.name}`);playRankUp();}
+  prevRankId=rank.id;
+}
+function renderNav(){document.getElementById('nav').innerHTML=NAV.map(n=>`<button class="nav-btn ${view===n.v?'active':''}" onclick="setView('${n.v}')"><span class="nav-icon">${n.icon}</span>${n.label}</button>`).join('');}
+function setView(v){view=v;render();}
+
+// ── DASHBOARD ──────────────────────────
+function renderDashboard(){
+  const sc=getOverallScore(),rank=getRank(sc),di=state.currentDay-1,ds=getDayScore(di),day=state.days[di];
+  const C=2*Math.PI*28,off=C-(ds/100)*C;
+  const tDone=state.days.reduce((a,d)=>a+d.tasks.filter(t=>t.done).length,0);
+  const tMiss=state.days.reduce((a,d)=>a+d.tasks.filter(t=>t.missed).length,0);
+  const gDays=state.days.filter((_,i)=>getDayScore(i)>=80).length;
+  const prev=day.tasks.slice(0,4).map(t=>`
+    <div class="task-row">
+      <button class="btn-check ${t.done?'done':t.missed?'missed':''}" onclick="toggleTask(${di},'${t.id}')">${t.done?'✓':t.missed?'✗':''}</button>
+      <div style="flex:1">
+        <div class="task-cat">${esc(t.category)}</div>
+        <div class="task-name ${t.done?'done':t.missed?'missed':''}">${esc(t.task)}</div>
+        ${t.leakReason?`<div class="leak-tag">LEAK: ${esc(t.leakReason)}</div>`:''}
+        ${t.isSpecial&&!t.done?`<div class="mission-tag">SPECIAL MISSION</div>`:''}
+      </div>
+      ${!t.done&&!t.missed?`<button class="btn-miss" onclick="openMiss(${di},'${t.id}')">MISS</button>`:''}
+    </div>`).join('');
+  return `<div class="section">
+    <div class="card" style="border-color:${rank.accent}44;background:${rank.color}">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <div class="ring-wrap">
+          <svg class="ring-svg" width="68" height="68" viewBox="0 0 68 68">
+            <circle class="ring-bg" cx="34" cy="34" r="28"/>
+            <circle class="ring-fg" cx="34" cy="34" r="28" stroke="${rank.accent}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+          </svg>
+          <div class="ring-label">${ds}%</div>
+        </div>
+        <div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(8px,2vw,9px);color:var(--muted);letter-spacing:2px">DAY ${state.currentDay} / 15</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,6vw,26px);letter-spacing:4px;color:${rank.accent};text-shadow:0 0 20px ${rank.accent}88">${rank.icon} ${rank.name}</div>
+          <div style="font-size:clamp(8px,2.3vw,10px);color:var(--muted);font-family:'Share Tech Mono',monospace">${rank.sub}</div>
+        </div>
+      </div>
+      <div class="score-bar"><div class="score-fill" style="width:${sc}%;background:${rank.accent};box-shadow:0 0 8px ${rank.accent}"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted)">OVERALL</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:${rank.accent}">${sc}%</span>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Today's Battlefield</div>${prev}${day.tasks.length>4?`<div style="text-align:center;padding:7px 0;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);cursor:pointer" onclick="setView('tracker')">+ ${day.tasks.length-4} more →</div>`:''}</div>
+    <div class="card"><div style="display:flex">${[['DONE',tDone,'var(--green)'],['GOOD DAYS',gDays,'var(--accent)'],['MISSED',tMiss,'var(--danger)']].map(([l,v,c],i)=>`<div style="flex:1;text-align:center;${i<2?'border-right:1px solid var(--border)':''};padding:4px 0"><div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(18px,5.5vw,24px);color:${c}">${v}</div><div style="font-family:'Share Tech Mono',monospace;font-size:clamp(6px,1.9vw,8px);color:var(--muted);letter-spacing:1px">${l}</div></div>`).join('')}</div></div>
+    <button class="btn-primary" onclick="nextDay()">NEXT DAY →</button>
+  </div>`;
+}
+
+// ── TRACKER ────────────────────────────
+function renderTracker(){
+  const di=state.currentDay-1,ds=getDayScore(di),day=state.days[di];
+  const sc=ds>=80?'var(--green)':ds>=50?'var(--gold)':'var(--danger)';
+  const dayBtns=state.days.map((_,i)=>{const s=getDayScore(i);const dc=s>=80?'var(--green)':s>=50?'var(--gold)':'var(--danger)';return `<button class="day-btn ${state.currentDay===i+1?'active':''} ${s>=80?'good':''}" onclick="goDay(${i+1})">${i+1}${s>0?`<div class="day-dot" style="background:${dc}"></div>`:''}</button>`;}).join('');
+  const tasks=day.tasks.map(t=>`
+    <div class="card" style="padding:11px 13px;border-color:${t.done?'var(--accent)44':t.missed?'#ff224433':t.isSpecial?'#ffd70033':'var(--border)'}">
+      <div style="display:flex;align-items:flex-start;gap:11px">
+        <button class="btn-check ${t.done?'done':t.missed?'missed':''}" onclick="toggleTask(${di},'${t.id}')">${t.done?'✓':t.missed?'✗':''}</button>
+        <div style="flex:1">
+          <div class="task-cat" style="${t.isSpecial?'color:var(--gold)':''}">${esc(t.category)}</div>
+          <div class="task-name ${t.done?'done':t.missed?'missed':''}" style="${t.isSpecial&&!t.done&&!t.missed?'color:var(--gold)':''}">${esc(t.task)}</div>
+          ${t.leakReason?`<div class="leak-tag">LEAK: ${esc(t.leakReason)}</div>`:''}
+          ${t.isSpecial&&!t.done?`<div class="mission-tag">SPECIAL MISSION</div>`:''}
+        </div>
+        ${!t.done&&!t.missed?`<button class="btn-miss" onclick="openMiss(${di},'${t.id}')">MISS</button>`:''}
+      </div>
+    </div>`).join('');
+  return `<div class="section">
+    <div class="sec-label">SELECT DAY</div>
+    <div class="day-selector">${dayBtns}</div>
+    <div class="card" style="padding:9px 13px"><div style="display:flex;align-items:center;justify-content:space-between"><div class="card-title" style="margin-bottom:0">DAY ${state.currentDay}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(18px,5.2vw,22px);color:${sc}">${ds}%</div></div><div class="score-bar" style="margin-top:7px"><div class="score-fill" style="width:${ds}%;background:${sc}"></div></div></div>
+    ${tasks}</div>`;
+}
+
+// ── PLANNER (+ Special Missions) ───────
+function renderPlanner(){
+  const inp=state.planInputs||{},missions=state.specialMissions||[];
+  const mRows=missions.map((m,i)=>`<div class="mission-row"><input class="mission-day-in" type="number" min="1" max="15" value="${m.day}" oninput="updMDay(${i},this.value)" placeholder="D"/><input class="mission-task-in" type="text" value="${esc(m.task||'')}" oninput="updMTask(${i},this.value)" placeholder="Special task for this day..."/><button class="btn-rm" onclick="rmMission(${i})">✕</button></div>`).join('');
+  return `<div class="section">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(19px,5.8vw,24px);letter-spacing:4px;color:var(--accent);margin-bottom:3px">15-Day War Plan</div>
+    <div class="sec-label">DAILY TASKS — REPEAT ALL 15 DAYS</div>
+    ${CATS.map(cat=>`<div class="input-group"><label class="input-label">${esc(cat)}</label><input class="input-field" placeholder="Task for ${esc(cat)}..." value="${esc(inp[cat]||'')}" oninput="updPlan('${cat}',this.value)"/></div>`).join('')}
+    <div class="divider"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,4.8vw,20px);letter-spacing:3px;color:var(--gold);margin-bottom:3px">⭐ Special Missions</div>
+    <div class="sec-label" style="color:#ffd70066">ONE-TIME TASKS ON A SPECIFIC DAY (E.G. MOCK TEST)</div>
+    ${mRows}
+    <button class="btn-add-m" onclick="addMission()">+ ADD SPECIAL MISSION</button>
+    <div class="warn-box"><div class="warn-title">⚠ WARNING</div><div style="font-size:clamp(10px,3vw,12px);color:var(--text);line-height:1.5">Daily tasks repeat all 15 days. Special Missions appear only on their assigned day. Activate to rebuild all days. Existing progress will reset.</div></div>
+    <button class="btn-primary" onclick="activatePlan()">⚔ ACTIVATE WAR PLAN</button>
+  </div>`;
+}
+
+// ── ANALYSIS (+ Export/Import + Audio) ─
+function renderAnalysis(){
+  const leaks={};
+  state.days.forEach(d=>d.tasks.forEach(t=>{if(t.missed&&t.leakReason)leaks[t.leakReason]=(leaks[t.leakReason]||0)+1;}));
+  const sorted=Object.entries(leaks).sort((a,b)=>b[1]-a[1]);
+  const max=sorted[0]?.[1]||1;
+  const tDone=state.days.reduce((a,d)=>a+d.tasks.filter(t=>t.done).length,0);
+  const tMiss=state.days.reduce((a,d)=>a+d.tasks.filter(t=>t.missed).length,0);
+  const sc=getOverallScore();
+  return `<div class="section">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(19px,5.8vw,24px);letter-spacing:4px;color:var(--accent);margin-bottom:14px">Discipline Leak Analysis</div>
+    <div class="card">
+      <div class="stat-row"><span class="stat-label">TASKS DONE</span><span class="stat-val" style="color:var(--green)">${tDone}</span></div>
+      <div class="stat-row"><span class="stat-label">TASKS MISSED</span><span class="stat-val" style="color:var(--danger)">${tMiss}</span></div>
+      <div class="stat-row" style="border-bottom:none"><span class="stat-label">OVERALL SCORE</span><span class="stat-val">${sc}%</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Your Weakness Map</div>
+      ${sorted.map(([r,c])=>`<div class="leak-bar"><div class="leak-label">${esc(r)}</div><div class="leak-track"><div class="leak-fill" style="width:${(c/max)*100}%"></div></div><div class="leak-count">${c}x</div></div>`).join('')}
+      ${sorted.length?`<div style="margin-top:10px;padding:10px;background:#ff224411;border:1px solid #ff224433"><div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--danger);letter-spacing:1px;margin-bottom:4px">⚡ PRIMARY ENEMY</div><div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,4.8vw,20px);color:var(--danger);letter-spacing:3px">${esc(sorted[0][0])}</div><div style="font-size:11px;color:var(--muted);margin-top:3px">This is killing your growth. Fix this first.</div></div>`:`<div style="text-align:center;padding:24px 0"><div style="font-size:28px;margin-bottom:6px">🛡️</div><div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,4.8vw,20px);color:var(--green);letter-spacing:3px">No Leaks Detected</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Keep fighting. Zero is where legends start.</div></div>`}
+    </div>
+
+    <div class="divider"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,4.8vw,20px);letter-spacing:3px;color:var(--accent);margin-bottom:3px">Data Vault</div>
+    <div class="sec-label">BACKUP & RESTORE PROGRESS</div>
+    <div class="warn-box"><div class="warn-title">ℹ INFO</div><div style="font-size:clamp(10px,3vw,12px);color:var(--text);line-height:1.5">Browser cache clear hone se data delete ho sakta hai. Export karke safe raho, warrior.</div></div>
+    <div class="data-row">
+      <button class="btn-secondary" onclick="exportData()">⬇ EXPORT .JSON</button>
+      <button class="btn-danger-outline" onclick="document.getElementById('importFile').click()">⬆ IMPORT .JSON</button>
+    </div>
+
+    <div class="divider"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,4.8vw,20px);letter-spacing:3px;color:var(--accent);margin-bottom:3px">Battle Audio</div>
+    <div class="toggle-wrap">
+      <div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(12px,3.5vw,14px);font-weight:600">Sound Effects</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(7px,2vw,9px);color:var(--muted)">CLICK / MISS / RANK-UP AUDIO</div>
+      </div>
+      <div class="toggle-track ${audioEnabled?'on':''}" onclick="toggleAudio()" id="audioToggle"><div class="toggle-thumb"></div></div>
+    </div>
+  </div>`;
+}
+
+// ── RANKS ──────────────────────────────
+function renderRanks(){
+  const sc=getOverallScore(),rank=getRank(sc);
+  return `<div class="section">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(19px,5.8vw,24px);letter-spacing:4px;color:var(--accent);margin-bottom:3px">Rank Hierarchy</div>
+    <div class="sec-label">CURRENT: ${rank.name} (${sc}%)</div>
+    ${[...RANKS].reverse().map(r=>`<div class="rank-card ${r.id===rank.id?'current':''}" style="border-color:${r.id===rank.id?r.accent:r.accent+'33'};background:${r.id===rank.id?r.color:'var(--bg2)'}"><div class="rank-icon-big">${r.icon}</div><div><div class="rank-name-big" style="color:${r.accent}">${r.name}</div><div class="rank-sub-sm" style="color:${r.accent}99">${r.sub}</div></div><div class="rank-badge" style="color:${r.id===rank.id?r.accent:'var(--muted)'}">${r.id===rank.id?'← YOU':r.min+'%+'}</div></div>`).join('')}
+  </div>`;
+}
+
+// ── ACTIONS ────────────────────────────
+function toggleTask(di,tid){const t=state.days[di].tasks.find(x=>x.id===tid);if(!t)return;if(t.done){t.done=false;}else{t.done=true;t.missed=false;t.leakReason=null;playClick();}saveState();render();}
+function openMiss(di,tid){leakTarget={di,tid};document.getElementById('leakBtns').innerHTML=LEAKS.map(r=>`<button class="leak-btn" onclick="submitLeak('${r}')">${r}</button>`).join('');document.getElementById('modal').style.display='flex';playMiss();}
+function closeModal(e){if(e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none';}
+function submitLeak(r){if(!leakTarget)return;const t=state.days[leakTarget.di].tasks.find(x=>x.id===leakTarget.tid);if(t){t.done=false;t.missed=true;t.leakReason=r;}document.getElementById('modal').style.display='none';leakTarget=null;saveState();render();}
+function goDay(d){state.currentDay=d;saveState();render();}
+function nextDay(){if(state.currentDay<15){state.currentDay++;saveState();render();}else showToast('15 DAYS COMPLETE! 🏆');}
+function updPlan(cat,val){if(!state.planInputs)state.planInputs={};state.planInputs[cat]=val;saveState();}
+function addMission(){if(!state.specialMissions)state.specialMissions=[];state.specialMissions.push({day:state.currentDay,task:''});saveState();render();}
+function rmMission(i){state.specialMissions.splice(i,1);saveState();render();}
+function updMDay(i,v){state.specialMissions[i].day=parseInt(v)||1;saveState();}
+function updMTask(i,v){state.specialMissions[i].task=v;saveState();}
+function activatePlan(){state.days=buildDays(state.planInputs||{},state.specialMissions||[]);state.currentDay=1;saveState();showToast('⚔ WAR PLAN ACTIVATED!');setView('tracker');}
+function toggleAudio(){audioEnabled=!audioEnabled;state.audioOn=audioEnabled;saveState();const t=document.getElementById('audioToggle');if(t)t.classList.toggle('on',audioEnabled);if(audioEnabled)playClick();}
+function exportData(){const b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`yodha_day${state.currentDay}.json`;a.click();URL.revokeObjectURL(u);showToast('✅ EXPORTED!');}
+function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.days&&d.currentDay!==undefined){state=d;audioEnabled=state.audioOn!==false;saveState();render();showToast('✅ IMPORTED!');}else showToast('❌ INVALID FILE','#ff2244');}catch{showToast('❌ ERROR','#ff2244');};};r.readAsText(f);e.target.value='';}
+
+// ── RENDER ─────────────────────────────
+function render(){updateHeader();renderNav();const c=document.getElementById('content');if(view==='dashboard')c.innerHTML=renderDashboard();else if(view==='tracker')c.innerHTML=renderTracker();else if(view==='planner')c.innerHTML=renderPlanner();else if(view==='analysis')c.innerHTML=renderAnalysis();else if(view==='ranks')c.innerHTML=renderRanks();}
+render();
+</script>
+</body>
+</html>
